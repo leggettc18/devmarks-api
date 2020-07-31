@@ -1,10 +1,15 @@
 package app
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sirupsen/logrus"
+
+	"leggett.dev/devmarks/api/db"
+)
 
 type Context struct {
 	Logger        logrus.FieldLogger
 	RemoteAddress string
+	Database      *db.Database
 }
 
 func (ctx *Context) WithLogger(logger logrus.FieldLogger) *Context {
