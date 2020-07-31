@@ -16,6 +16,7 @@ import (
 
 	"leggett.dev/devmarks/api/api"
 	"leggett.dev/devmarks/api/app"
+	"leggett.dev/devmarks/api/model"
 )
 
 func serveAPI(ctx context.Context, api *api.API) {
@@ -83,6 +84,9 @@ var serveCmd = &cobra.Command{
 			defer cancel()
 			serveAPI(ctx, api)
 		}()
+
+		a.Database.AutoMigrate(&model.User{}, &model.Bookmark{})
+		a.Database.CreateUser(&model.User{Email: "foo@example.com"})
 
 		wg.Wait()
 		return nil

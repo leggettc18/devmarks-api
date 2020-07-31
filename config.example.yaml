@@ -1,1 +1,2 @@
 SecretKey: 123
+DatabaseURI: host=localhost port=5432 user=devmarks dbname=devmarks password=devmarks
