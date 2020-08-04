@@ -13,7 +13,7 @@ func (db *Database) GetBookmarkById(id uint) (*model.Bookmark, error) {
 
 func (db *Database) GetBookmarksByUserId(userId uint) ([]*model.Bookmark, error) {
 	var bookmarks []*model.Bookmark
-	return bookmarks, errors.Wrap(db.Find(&bookmarks, model.Bookmark{UserID: userId}).Error, "unable to get bookmarks")
+	return bookmarks, errors.Wrap(db.Find(&bookmarks, model.Bookmark{OwnerID: userId}).Error, "unable to get bookmarks")
 }
 
 func (db *Database) CreateBookmark(bookmark *model.Bookmark) error {

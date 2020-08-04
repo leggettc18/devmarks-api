@@ -1,9 +1,7 @@
 package model
 
-import "github.com/jinzhu/gorm"
-
 type Folder struct {
-	gorm.Model
+	Model
 
 	Name  string
 	Color string
