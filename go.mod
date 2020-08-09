@@ -12,7 +12,8 @@ require (
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/gocql/gocql v0.0.0-20200624222514-34081eda590e // indirect
-	github.com/golang-migrate/migrate/v4 v4.12.1 // indirect
+	github.com/golang-migrate/migrate v3.5.4+incompatible
+	github.com/golang-migrate/migrate/v4 v4.12.1
 	github.com/google/flatbuffers v1.12.0 // indirect
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
