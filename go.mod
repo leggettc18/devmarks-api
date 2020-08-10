@@ -15,6 +15,7 @@ require (
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golang-migrate/migrate/v4 v4.12.1
 	github.com/google/flatbuffers v1.12.0 // indirect
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
 	github.com/hashicorp/go-retryablehttp v0.6.6 // indirect
@@ -25,6 +26,7 @@ require (
 	github.com/lib/pq v1.8.0 // indirect
 	github.com/nakagami/firebirdsql v0.0.0-20200724081317-0cfab755829a // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/shaj13/go-guardian v1.3.2
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/snowflakedb/gosnowflake v1.3.7 // indirect

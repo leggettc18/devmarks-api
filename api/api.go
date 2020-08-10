@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -10,11 +11,18 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/shaj13/go-guardian/auth"
+	"github.com/shaj13/go-guardian/auth/strategies/basic"
+	"github.com/shaj13/go-guardian/auth/strategies/bearer"
+	"github.com/shaj13/go-guardian/store"
 	"github.com/sirupsen/logrus"
 
 	"leggett.dev/devmarks/api/app"
 	"leggett.dev/devmarks/api/model"
 )
+
+var authenticator auth.Authenticator
+var cache store.Cache
 
 type statusCodeRecorder struct {
 	http.ResponseWriter
@@ -41,7 +49,22 @@ func New(a *app.App) (api *API, err error) {
 	return api, nil
 }
 
+func (a *API) setupGoGuardian() {
+	authenticator = auth.New()
+	cache = store.NewFIFO(context.Background(), time.Minute*10)
+
+	basicStrategy := basic.New(a.validateLogin, cache)
+	tokenStrategy := bearer.New(bearer.NoOpAuthenticate, cache)
+
+	authenticator.EnableStrategy(basic.StrategyKey, basicStrategy)
+	authenticator.EnableStrategy(bearer.CachedStrategyKey, tokenStrategy)
+}
+
 func (a *API) Init(r *mux.Router) {
+	// authentication
+	a.setupGoGuardian()
+	r.Handle("/auth/token/", a.handler(a.createToken)).Methods("GET")
+
 	// user methods
 	r.Handle("/users/", a.handler(a.CreateUser)).Methods("POST")
 
@@ -69,7 +92,7 @@ func (a *API) handler(f func(*app.Context, http.ResponseWriter, *http.Request) e
 		ctx := a.App.NewContext().WithRemoteAddress(a.IPAddressForRequest(r))
 		ctx = ctx.WithLogger(ctx.Logger.WithField("request_id", base64.RawURLEncoding.EncodeToString(model.NewId())))
 
-		if username, password, ok := r.BasicAuth(); ok {
+		/* if username, password, ok := r.BasicAuth(); ok {
 			user, err := a.App.GetUserByEmail(username)
 
 			if user == nil || err != nil {
@@ -85,6 +108,26 @@ func (a *API) handler(f func(*app.Context, http.ResponseWriter, *http.Request) e
 			}
 
 			ctx = ctx.WithUser(user)
+		} */
+		if r.URL.Path != "/api/users/" {
+			userInfo, err := authenticator.Authenticate(r)
+			if err != nil {
+				ctx.Logger.WithError(err).Error("unable to get user")
+				http.Error(w, "invalid credentials", http.StatusForbidden)
+				return
+			} else {
+				user, err := a.App.GetUserByEmail(userInfo.UserName())
+
+				if user == nil || err != nil {
+					if err != nil {
+						ctx.Logger.WithError(err).Error("unable to get user")
+					}
+					http.Error(w, "invalid credentials", http.StatusForbidden)
+					return
+				}
+
+				ctx = ctx.WithUser(user)
+			}
 		}
 
 		defer func() {
