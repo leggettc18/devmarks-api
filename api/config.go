@@ -2,6 +2,7 @@ package api
 
 import "github.com/spf13/viper"
 
+// Config is an object representing the configuration of our API (port, proxy-count, etc.)
 type Config struct {
 	// The port to bind the web application server to
 	Port int
@@ -11,6 +12,8 @@ type Config struct {
 	ProxyCount int
 }
 
+// InitConfig initializes our API's Config object using viper and setting defaults
+// where values are not provided.
 func InitConfig() (*Config, error) {
 	config := &Config{
 		Port:       viper.GetInt("Port"),

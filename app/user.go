@@ -8,10 +8,13 @@ import (
 	"leggett.dev/devmarks/api/model"
 )
 
+// GetUserByEmail returns a user that matches the specified email address
 func (a *App) GetUserByEmail(email string) (*model.User, error) {
 	return a.Database.GetUserByEmail(email)
 }
 
+// CreateUser performs the business logic necessary to create and validate a new
+// User, returning an error if validation fails or a password cannot be set.
 func (ctx *Context) CreateUser(user *model.User, password string) error {
 	if err := ctx.validateUser(user, password); err != nil {
 		return err

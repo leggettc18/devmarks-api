@@ -1,10 +1,12 @@
 package model
 
+// Bookmark is a model that represents the bookmarks our app can save. They are owned by one user,
+// Can be in any number of folders, and can have any number of tags.
 type Bookmark struct {
 	Model
 
 	Name  string
-	Url   string
+	URL   string
 	Color string
 
 	OwnerID uint

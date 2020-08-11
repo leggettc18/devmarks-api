@@ -5,11 +5,13 @@ import (
 	"leggett.dev/devmarks/api/db"
 )
 
+// App is an object representing our App's configuration
 type App struct {
 	Config   *Config
 	Database *db.Database
 }
 
+// NewContext returns a new Context object
 func (a *App) NewContext() *Context {
 	return &Context{
 		Logger:   logrus.New(),
@@ -17,6 +19,7 @@ func (a *App) NewContext() *Context {
 	}
 }
 
+// New returns a new App object
 func New() (app *App, err error) {
 	app = &App{}
 	app.Config, err = InitConfig()
@@ -34,10 +37,14 @@ func New() (app *App, err error) {
 	return app, err
 }
 
+// Close performs any actions necessary to close our our running
+// app, like closing the database connection
 func (a *App) Close() error {
 	return a.Database.Close()
 }
 
+// ValidationError contains specific information about why a validation
+// failure occurred.
 type ValidationError struct {
 	Message string `json:"message"`
 }
@@ -46,6 +53,9 @@ func (e *ValidationError) Error() string {
 	return e.Message
 }
 
+// UserError contains specific information about what User-related
+// error occurred and what status code to write to the HTTP response
+// header
 type UserError struct {
 	Message    string `json:"message"`
 	StatusCode int    `json:"-"`

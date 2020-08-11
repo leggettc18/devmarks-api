@@ -35,11 +35,14 @@ func (r *statusCodeRecorder) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)
 }
 
+// API is an object representing our API's configuration, and includes a pointer
+// to our App's App object
 type API struct {
 	App    *app.App
 	Config *Config
 }
 
+// New returns a new API object from our App's App object
 func New(a *app.App) (api *API, err error) {
 	api = &API{App: a}
 	api.Config, err = InitConfig()
@@ -60,6 +63,7 @@ func (a *API) setupGoGuardian() {
 	authenticator.EnableStrategy(bearer.CachedStrategyKey, tokenStrategy)
 }
 
+// Init Initializes our API (routes, authentication setup, etc.)
 func (a *API) Init(r *mux.Router) {
 	// authentication
 	a.setupGoGuardian()
@@ -72,9 +76,9 @@ func (a *API) Init(r *mux.Router) {
 	bookmarksRouter := r.PathPrefix("/bookmarks").Subrouter()
 	bookmarksRouter.Handle("/", a.handler(a.GetBookmarks)).Methods("GET")
 	bookmarksRouter.Handle("/", a.handler(a.CreateBookmark)).Methods("POST")
-	bookmarksRouter.Handle("/{id:[0-9]+}/", a.handler(a.GetBookmarkById)).Methods("GET")
-	bookmarksRouter.Handle("/{id:[0-9]+}/", a.handler(a.UpdateBookmarkById)).Methods("PATCH")
-	bookmarksRouter.Handle("/{id:[0-9]+}/", a.handler(a.DeleteBookmarkById)).Methods("DELETE")
+	bookmarksRouter.Handle("/{id:[0-9]+}/", a.handler(a.GetBookmarkByID)).Methods("GET")
+	bookmarksRouter.Handle("/{id:[0-9]+}/", a.handler(a.UpdateBookmarkByID)).Methods("PATCH")
+	bookmarksRouter.Handle("/{id:[0-9]+}/", a.handler(a.DeleteBookmarkByID)).Methods("DELETE")
 }
 
 func (a *API) handler(f func(*app.Context, http.ResponseWriter, *http.Request) error) http.Handler {
@@ -90,7 +94,7 @@ func (a *API) handler(f func(*app.Context, http.ResponseWriter, *http.Request) e
 		}
 
 		ctx := a.App.NewContext().WithRemoteAddress(a.IPAddressForRequest(r))
-		ctx = ctx.WithLogger(ctx.Logger.WithField("request_id", base64.RawURLEncoding.EncodeToString(model.NewId())))
+		ctx = ctx.WithLogger(ctx.Logger.WithField("request_id", base64.RawURLEncoding.EncodeToString(model.NewID())))
 
 		/* if username, password, ok := r.BasicAuth(); ok {
 			user, err := a.App.GetUserByEmail(username)
@@ -115,19 +119,18 @@ func (a *API) handler(f func(*app.Context, http.ResponseWriter, *http.Request) e
 				ctx.Logger.WithError(err).Error("unable to get user")
 				http.Error(w, "invalid credentials", http.StatusForbidden)
 				return
-			} else {
-				user, err := a.App.GetUserByEmail(userInfo.UserName())
-
-				if user == nil || err != nil {
-					if err != nil {
-						ctx.Logger.WithError(err).Error("unable to get user")
-					}
-					http.Error(w, "invalid credentials", http.StatusForbidden)
-					return
-				}
-
-				ctx = ctx.WithUser(user)
 			}
+			user, err := a.App.GetUserByEmail(userInfo.UserName())
+
+			if user == nil || err != nil {
+				if err != nil {
+					ctx.Logger.WithError(err).Error("unable to get user")
+				}
+				http.Error(w, "invalid credentials", http.StatusForbidden)
+				return
+			}
+
+			ctx = ctx.WithUser(user)
 		}
 
 		defer func() {
@@ -185,6 +188,7 @@ func (a *API) handler(f func(*app.Context, http.ResponseWriter, *http.Request) e
 	})
 }
 
+// IPAddressForRequest gets the IP address from our HTTP request
 func (a *API) IPAddressForRequest(r *http.Request) string {
 	addr := r.RemoteAddr
 	if a.Config.ProxyCount > 0 {

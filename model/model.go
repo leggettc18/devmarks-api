@@ -5,16 +5,19 @@ import (
 	"time"
 )
 
-type Id []byte
+// ID is a wrapper around []byte representing the ID of any of our requests.
+type ID []byte
 
-func NewId() Id {
-	ret := make(Id, 20)
+// NewID generates a new random ID value.
+func NewID() ID {
+	ret := make(ID, 20)
 	if _, err := rand.Read(ret); err != nil {
 		panic(err)
 	}
 	return ret
 }
 
+// Model is a base model to provide certain values to all of our other models.
 type Model struct {
 	ID        uint       `gorm:"primary_key" json:"id"`
 	CreatedAt time.Time  `json:"created_at"`

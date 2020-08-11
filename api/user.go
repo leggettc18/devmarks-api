@@ -16,15 +16,19 @@ import (
 	"leggett.dev/devmarks/api/model"
 )
 
+// UserInput represents the input to the CreateUser function
 type UserInput struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// UserResponse represents the response written to the HTTP response header upon
+// CreateUser's completion
 type UserResponse struct {
-	Id uint `json:"id"`
+	ID uint `json:"id"`
 }
 
+// CreateUser creates a new user based on the json data provided in the HTTP Request
 func (a *API) CreateUser(ctx *app.Context, w http.ResponseWriter, r *http.Request) error {
 	var input UserInput
 
@@ -44,7 +48,7 @@ func (a *API) CreateUser(ctx *app.Context, w http.ResponseWriter, r *http.Reques
 		return err
 	}
 
-	data, err := json.Marshal(&UserResponse{Id: user.ID})
+	data, err := json.Marshal(&UserResponse{ID: user.ID})
 	if err != nil {
 		return err
 	}
