@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/shaj13/go-guardian/auth"
-	"github.com/shaj13/go-guardian/auth/strategies/basic"
 	"github.com/shaj13/go-guardian/auth/strategies/bearer"
 	"github.com/shaj13/go-guardian/store"
 	"github.com/sirupsen/logrus"
@@ -56,10 +55,8 @@ func (a *API) setupGoGuardian() {
 	authenticator = auth.New()
 	cache = store.NewFIFO(context.Background(), time.Minute*10)
 
-	basicStrategy := basic.New(a.validateLogin, cache)
 	tokenStrategy := bearer.New(bearer.NoOpAuthenticate, cache)
 
-	authenticator.EnableStrategy(basic.StrategyKey, basicStrategy)
 	authenticator.EnableStrategy(bearer.CachedStrategyKey, tokenStrategy)
 }
 
@@ -67,7 +64,7 @@ func (a *API) setupGoGuardian() {
 func (a *API) Init(r *mux.Router) {
 	// authentication
 	a.setupGoGuardian()
-	r.Handle("/auth/token/", a.handler(a.createToken)).Methods("GET")
+	r.Handle("/auth/token/", a.handler(a.createToken)).Methods("POST")
 
 	// user methods
 	r.Handle("/users/", a.handler(a.CreateUser)).Methods("POST")
@@ -113,7 +110,7 @@ func (a *API) handler(f func(*app.Context, http.ResponseWriter, *http.Request) e
 
 			ctx = ctx.WithUser(user)
 		} */
-		if r.URL.Path != "/api/users/" {
+		if !(r.URL.Path == "/api/users/" || r.URL.Path == "/api/auth/token/") {
 			userInfo, err := authenticator.Authenticate(r)
 			if err != nil {
 				ctx.Logger.WithError(err).Error("unable to get user")

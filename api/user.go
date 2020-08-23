@@ -74,14 +74,27 @@ func (a *API) validateLogin(ctx context.Context, r *http.Request, userName, pass
 }
 
 func (a *API) createToken(ctx *app.Context, w http.ResponseWriter, r *http.Request) error {
-	if ctx.User == nil {
-		return ctx.AuthorizationError()
+	var input UserInput
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
 	}
+
+	if err := json.Unmarshal(body, &input); err != nil {
+		return err
+	}
+
+	user, err := a.validateLogin(context.TODO(), r, input.Email, input.Password)
+	if err != nil {
+		return err
+	}
+
 	token := uuid.New().String()
-	user := auth.NewDefaultUser(ctx.User.Email, strconv.Itoa(int(ctx.User.ID)), nil, nil)
 	tokenStrategy := authenticator.Strategy(bearer.CachedStrategyKey)
 	auth.Append(tokenStrategy, token, user, r)
-	body := fmt.Sprintf("token: %s \n", token)
-	_, err := w.Write([]byte(body))
+	responseBody := fmt.Sprintf("{ \"token\": \"%s\" }\n", token)
+	_, err = w.Write([]byte(responseBody))
 	return err
 }
