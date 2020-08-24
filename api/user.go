@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/shaj13/go-guardian/auth"
-	"github.com/shaj13/go-guardian/auth/strategies/bearer"
 	"leggett.dev/devmarks/api/app"
 	"leggett.dev/devmarks/api/model"
 )
@@ -57,6 +56,19 @@ func (a *API) CreateUser(ctx *app.Context, w http.ResponseWriter, r *http.Reques
 	return err
 }
 
+// GetUser Retrieves the authenticated user from the database
+func (a *API) GetUser(ctx *app.Context, w http.ResponseWriter, r *http.Request) error {
+	user := ctx.User
+
+	data, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(data)
+	return err
+}
+
 func (a *API) validateLogin(ctx context.Context, r *http.Request, userName, password string) (auth.Info, error) {
 	user, err := a.App.GetUserByEmail(userName)
 
@@ -86,15 +98,14 @@ func (a *API) createToken(ctx *app.Context, w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	user, err := a.validateLogin(context.TODO(), r, input.Email, input.Password)
+	user, err := a.validateLogin(r.Context(), r, input.Email, input.Password)
 	if err != nil {
 		return err
 	}
 
-	token := uuid.New().String()
-	tokenStrategy := authenticator.Strategy(bearer.CachedStrategyKey)
-	auth.Append(tokenStrategy, token, user, r)
-	responseBody := fmt.Sprintf("{ \"token\": \"%s\" }\n", token)
+	bearerToken := uuid.New().String()
+	cache.Store(bearerToken, user, r)
+	responseBody := fmt.Sprintf("{ \"token\": \"%s\" }\n", bearerToken)
 	_, err = w.Write([]byte(responseBody))
 	return err
 }

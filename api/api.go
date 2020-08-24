@@ -12,7 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/shaj13/go-guardian/auth"
-	"github.com/shaj13/go-guardian/auth/strategies/bearer"
+	"github.com/shaj13/go-guardian/auth/strategies/token"
 	"github.com/shaj13/go-guardian/store"
 	"github.com/sirupsen/logrus"
 
@@ -55,9 +55,9 @@ func (a *API) setupGoGuardian() {
 	authenticator = auth.New()
 	cache = store.NewFIFO(context.Background(), time.Minute*10)
 
-	tokenStrategy := bearer.New(bearer.NoOpAuthenticate, cache)
+	tokenStrategy := token.New(token.NoOpAuthenticate, cache)
 
-	authenticator.EnableStrategy(bearer.CachedStrategyKey, tokenStrategy)
+	authenticator.EnableStrategy(token.CachedStrategyKey, tokenStrategy)
 }
 
 // Init Initializes our API (routes, authentication setup, etc.)
@@ -68,6 +68,7 @@ func (a *API) Init(r *mux.Router) {
 
 	// user methods
 	r.Handle("/users/", a.handler(a.CreateUser)).Methods("POST")
+	r.Handle("/user/", a.handler(a.GetUser)).Methods("GET")
 
 	// bookmark methods
 	bookmarksRouter := r.PathPrefix("/bookmarks").Subrouter()
@@ -111,7 +112,8 @@ func (a *API) handler(f func(*app.Context, http.ResponseWriter, *http.Request) e
 			ctx = ctx.WithUser(user)
 		} */
 		if !(r.URL.Path == "/api/users/" || r.URL.Path == "/api/auth/token/") {
-			userInfo, err := authenticator.Authenticate(r)
+			tokenStrategy := authenticator.Strategy(token.CachedStrategyKey)
+			userInfo, err := tokenStrategy.Authenticate(r.Context(), r)
 			if err != nil {
 				ctx.Logger.WithError(err).Error("unable to get user")
 				http.Error(w, "invalid credentials", http.StatusForbidden)
