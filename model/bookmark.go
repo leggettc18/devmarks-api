@@ -5,11 +5,11 @@ package model
 type Bookmark struct {
 	Model
 
-	Name  string
-	URL   string
-	Color string
+	Name  string `json:"name"`
+	URL   string `json:"url"`
+	Color string `json:"color"`
 
-	OwnerID uint
+	OwnerID uint     `json:"owner_id"`
 	Folders []Folder `gorm:"many2many:bookmark_folder;"`
 	Tags    []Tag    `gorm:"many2many:bookmark_tag;"`
 }
