@@ -3,12 +3,15 @@ module leggett.dev/devmarks/api
 go 1.14
 
 require (
+	github.com/friendsofgo/graphiql v0.2.2 // indirect
 	github.com/golang-migrate/migrate/v4 v4.12.1
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
+	github.com/graph-gophers/graphql-go v0.0.0-20201113091052-beb923fada29 // indirect
 	github.com/jinzhu/gorm v1.9.15
 	github.com/lib/pq v1.8.0 // indirect
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pelletier/go-toml v1.4.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/shaj13/go-guardian v1.4.1

@@ -9,14 +9,21 @@ import (
 	"sync"
 	"time"
 
+	"github.com/friendsofgo/graphiql"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/graph-gophers/graphql-go"
+	"github.com/graph-gophers/graphql-go/relay"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"leggett.dev/devmarks/api/api"
 	"leggett.dev/devmarks/api/app"
 )
+
+type query struct{}
+
+func (_ *query) Hello() string { return "Hello, world!" }
 
 func serveAPI(ctx context.Context, api *api.API) {
 	cors := handlers.CORS(
@@ -25,10 +32,25 @@ func serveAPI(ctx context.Context, api *api.API) {
 		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 	)
 
+	s := `
+                type Query {
+                        hello: String!
+                }
+        `
+	schema := graphql.MustParseSchema(s, &query{})
+
 	router := mux.NewRouter()
 	api.Init(router.PathPrefix("/api").Subrouter())
+	// graphql
+	router.Handle("/graphql", &relay.Handler{Schema: schema}).Methods("POST")
+	// graphiql
+	graphiqlHandler, err := graphiql.NewGraphiqlHandler("/graphql")
+	if err != nil {
+		panic(err)
+	}
+	router.Handle("/graphiql", graphiqlHandler).Methods("GET")
 
-	s := &http.Server{
+	server := &http.Server{
 		Addr:        fmt.Sprintf(":%d", api.Config.Port),
 		Handler:     cors(router),
 		ReadTimeout: 2 * time.Minute,
@@ -37,14 +59,14 @@ func serveAPI(ctx context.Context, api *api.API) {
 	done := make(chan struct{})
 	go func() {
 		<-ctx.Done()
-		if err := s.Shutdown(context.Background()); err != nil {
+		if err := server.Shutdown(context.Background()); err != nil {
 			logrus.Error(err)
 		}
 		close(done)
 	}()
 
 	logrus.Infof("serving api at http://127.0.0.1:%d", api.Config.Port)
-	if err := s.ListenAndServe(); err != http.ErrServerClosed {
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		logrus.Error(err)
 	}
 	<-done
