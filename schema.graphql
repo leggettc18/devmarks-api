@@ -1,0 +1,24 @@
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+type Bookmark {
+    id: ID!
+    createdAt: Time!
+    updatedAt: Time!
+    name: String!
+    url: String!
+    color: String
+}
+
+type User {
+    id: ID!
+    createdAt: Time!
+    updatedAt: Time!
+    email: String!
+}
+
+type Query {
+
+}

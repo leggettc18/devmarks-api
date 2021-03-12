@@ -9,11 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/friendsofgo/graphiql"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/graph-gophers/graphql-go"
-	"github.com/graph-gophers/graphql-go/relay"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -23,8 +20,6 @@ import (
 
 type query struct{}
 
-func (_ *query) Hello() string { return "Hello, world!" }
-
 func serveAPI(ctx context.Context, api *api.API) {
 	cors := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
@@ -32,23 +27,9 @@ func serveAPI(ctx context.Context, api *api.API) {
 		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 	)
 
-	s := `
-                type Query {
-                        hello: String!
-                }
-        `
-	schema := graphql.MustParseSchema(s, &query{})
-
 	router := mux.NewRouter()
 	api.Init(router.PathPrefix("/api").Subrouter())
-	// graphql
-	router.Handle("/graphql", &relay.Handler{Schema: schema}).Methods("POST")
-	// graphiql
-	graphiqlHandler, err := graphiql.NewGraphiqlHandler("/graphql")
-	if err != nil {
-		panic(err)
-	}
-	router.Handle("/graphiql", graphiqlHandler).Methods("GET")
+	api.InitGraphql(router)
 
 	server := &http.Server{
 		Addr:        fmt.Sprintf(":%d", api.Config.Port),

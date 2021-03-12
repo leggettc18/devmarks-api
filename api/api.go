@@ -5,23 +5,33 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"runtime/debug"
 	"strings"
 	"time"
 
+	"github.com/friendsofgo/graphiql"
 	"github.com/gorilla/mux"
+	"github.com/graph-gophers/graphql-go"
+	"github.com/graph-gophers/graphql-go/relay"
 	"github.com/shaj13/go-guardian/auth"
 	"github.com/shaj13/go-guardian/auth/strategies/token"
 	"github.com/shaj13/go-guardian/store"
 	"github.com/sirupsen/logrus"
 
 	"leggett.dev/devmarks/api/app"
+	"leggett.dev/devmarks/api/graphql/resolvers"
 	"leggett.dev/devmarks/api/model"
 )
 
 var authenticator auth.Authenticator
 var cache store.Cache
+
+var (
+	opts = []graphql.SchemaOpt{graphql.UseStringDescriptions()}
+)
+
 
 type statusCodeRecorder struct {
 	http.ResponseWriter
@@ -77,6 +87,37 @@ func (a *API) Init(r *mux.Router) {
 	bookmarksRouter.Handle("/{id:[0-9]+}/", a.handler(a.GetBookmarkByID)).Methods("GET")
 	bookmarksRouter.Handle("/{id:[0-9]+}/", a.handler(a.UpdateBookmarkByID)).Methods("PATCH")
 	bookmarksRouter.Handle("/{id:[0-9]+}/", a.handler(a.DeleteBookmarkByID)).Methods("DELETE")
+}
+
+func parseSchema(path string, resolver interface{}) *graphql.Schema {
+	bstr, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	schemaString := string(bstr)
+	parsedSchema, err := graphql.ParseSchema(
+		schemaString,
+		resolver,
+		opts...,
+	)
+	if err != nil {
+		panic(err)
+	}
+	return parsedSchema
+}
+
+func (a *API) InitGraphql(r *mux.Router) {
+	ctx := a.App.NewContext()
+	// graphql
+	rootResolver, err := resolvers.NewRoot(*ctx)
+	schema := parseSchema("../schema.graphql", rootResolver)
+	r.Handle("/graphql", &relay.Handler{Schema: schema}).Methods("POST")
+	// graphiql
+	graphiqlHandler, err := graphiql.NewGraphiqlHandler("/graphql")
+	if err != nil {
+		panic(err)
+	}
+	r.Handle("/graphiql", graphiqlHandler).Methods("GET")
 }
 
 func (a *API) handler(f func(*app.Context, http.ResponseWriter, *http.Request) error) http.Handler {
