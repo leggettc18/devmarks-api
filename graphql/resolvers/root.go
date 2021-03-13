@@ -2,6 +2,7 @@ package resolvers
 
 import (
 	"context"
+	"errors"
 
 	"leggett.dev/devmarks/api/db"
 	"leggett.dev/devmarks/api/model"
@@ -17,7 +18,11 @@ func NewRoot(db *db.Database) (*RootResolver, error) {
 }
 
 func(r RootResolver) Bookmarks(ctx context.Context) (*[]*BookmarkResolver, error){
-	var user *model.User = ctx.Value("user").(*model.User)
+	var user, ok = ctx.Value("user").(*model.User)
+
+	if !ok {
+		return nil, errors.New("bookmarks: no authenticated user in context")
+	}
 	bookmarks, err := r.Database.GetBookmarksByUserID(user.ID)
 
 	if err != nil {

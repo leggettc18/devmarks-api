@@ -119,14 +119,19 @@ func (a *API) InitGraphql(r *mux.Router) {
 	)
 	r.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		tokenStrategy := authenticator.Strategy(token.CachedStrategyKey)
-		userInfo, err := tokenStrategy.Authenticate(r.Context(), r)
-		if err != nil {
-			http.Error(w, "invalid credentials", http.StatusForbidden)
-			return
+		userInfo, _ := tokenStrategy.Authenticate(r.Context(), r)
+		// if err != nil {
+		// 	http.Error(w, "invalid credentials", http.StatusForbidden)
+		// }
+		var user *model.User
+		var ctx context.Context
+		if userInfo != nil {
+			user, _ = a.App.GetUserByEmail(userInfo.UserName())
+			ctx = context.WithValue(context.Background(), "user", user)
+		} else {
+			ctx = context.Background()
 		}
-		user, _ := a.App.GetUserByEmail(userInfo.UserName())
 
-		ctx := context.WithValue(context.Background(), "user", user)
 		wsHandler.ServeHTTP(w, r.WithContext(ctx))
 	})
 	// graphiql

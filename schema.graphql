@@ -1,6 +1,5 @@
 schema {
     query: Query
-    mutation: Mutation
 }
 
 type Bookmark {
@@ -21,10 +20,6 @@ type User {
 
 type Query {
     bookmarks: [Bookmark!]
-}
-
-type Mutation {
-
 }
 
 scalar Time
