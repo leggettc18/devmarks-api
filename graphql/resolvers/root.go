@@ -1,18 +1,24 @@
 package resolvers
 
-import "leggett.dev/devmarks/api/app"
+import (
+	"context"
+
+	"leggett.dev/devmarks/api/db"
+	"leggett.dev/devmarks/api/model"
+)
 
 type RootResolver struct {
-	ctx app.Context
+	Database *db.Database
 }
 
-func NewRoot(ctx app.Context) (*RootResolver, error) {
-	r := &RootResolver{}
+func NewRoot(db *db.Database) (*RootResolver, error) {
+	r := &RootResolver{Database: db}
 	return r, nil
 }
 
-func(r *RootResolver) Bookmarks() (*[]*BookmarkResolver, error){
-	bookmarks, err := r.ctx.Database.GetBookmarksByUserID(r.ctx.User.ID)
+func(r RootResolver) Bookmarks(ctx context.Context) (*[]*BookmarkResolver, error){
+	var user *model.User = ctx.Value("user").(*model.User)
+	bookmarks, err := r.Database.GetBookmarksByUserID(user.ID)
 
 	if err != nil {
 		return nil, err

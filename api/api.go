@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/graph-gophers/graphql-go"
 	"github.com/graph-gophers/graphql-go/relay"
+	"github.com/graph-gophers/graphql-transport-ws/graphqlws"
 	"github.com/shaj13/go-guardian/auth"
 	"github.com/shaj13/go-guardian/auth/strategies/token"
 	"github.com/shaj13/go-guardian/store"
@@ -107,11 +108,27 @@ func parseSchema(path string, resolver interface{}) *graphql.Schema {
 }
 
 func (a *API) InitGraphql(r *mux.Router) {
-	ctx := a.App.NewContext()
 	// graphql
-	rootResolver, err := resolvers.NewRoot(*ctx)
-	schema := parseSchema("../schema.graphql", rootResolver)
-	r.Handle("/graphql", &relay.Handler{Schema: schema}).Methods("POST")
+	rootResolver, err := resolvers.NewRoot(a.App.Database)
+	schema := parseSchema("./schema.graphql", rootResolver)
+	wsHandler:= graphqlws.NewHandlerFunc(
+		schema,
+		&relay.Handler{
+			Schema: schema,
+		},
+	)
+	r.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		tokenStrategy := authenticator.Strategy(token.CachedStrategyKey)
+		userInfo, err := tokenStrategy.Authenticate(r.Context(), r)
+		if err != nil {
+			http.Error(w, "invalid credentials", http.StatusForbidden)
+			return
+		}
+		user, _ := a.App.GetUserByEmail(userInfo.UserName())
+
+		ctx := context.WithValue(context.Background(), "user", user)
+		wsHandler.ServeHTTP(w, r.WithContext(ctx))
+	})
 	// graphiql
 	graphiqlHandler, err := graphiql.NewGraphiqlHandler("/graphql")
 	if err != nil {

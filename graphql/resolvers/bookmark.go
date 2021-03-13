@@ -1,6 +1,8 @@
 package resolvers
 
 import (
+	"fmt"
+
 	"github.com/graph-gophers/graphql-go"
 	"leggett.dev/devmarks/api/model"
 )
@@ -9,8 +11,8 @@ type BookmarkResolver struct {
 	Bookmark model.Bookmark
 }
 
-func (r *BookmarkResolver) ID() uint {
-	return r.Bookmark.ID
+func (r *BookmarkResolver) ID() graphql.ID {
+	return graphql.ID(fmt.Sprint(r.Bookmark.ID))
 }
 
 func (r *BookmarkResolver) CreatedAt() graphql.Time {
@@ -29,6 +31,6 @@ func (r *BookmarkResolver) URL() string {
 	return r.Bookmark.URL
 }
 
-func (r *BookmarkResolver) Color() string {
-	return r.Bookmark.Color
+func (r *BookmarkResolver) Color() *string {
+	return &r.Bookmark.Color
 }

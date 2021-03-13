@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
 	github.com/graph-gophers/graphql-go v0.0.0-20201113091052-beb923fada29 // indirect
+	github.com/graph-gophers/graphql-transport-ws v0.0.0-20200904065757-c681d7e1b135 // indirect
 	github.com/jinzhu/gorm v1.9.15
 	github.com/lib/pq v1.8.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
