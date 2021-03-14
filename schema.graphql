@@ -19,12 +19,18 @@ type User {
     email: String!
 }
 
+type AuthPayload {
+    token: String
+    user: User
+}
+
 type Query {
     bookmarks: [Bookmark!]
 }
 
 type Mutation {
     newBookmark(name: String!, url: String!, color: String): Bookmark!
+    login(email: String!, password: String!): AuthPayload
 }
 
 scalar Time

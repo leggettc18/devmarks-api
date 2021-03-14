@@ -109,7 +109,7 @@ func parseSchema(path string, resolver interface{}) *graphql.Schema {
 
 func (a *API) InitGraphql(r *mux.Router) {
 	// graphql
-	rootResolver, err := resolvers.NewRoot(a.App.Database)
+	rootResolver, err := resolvers.NewRoot(a.App)
 	schema := parseSchema("./schema.graphql", rootResolver)
 	wsHandler:= graphqlws.NewHandlerFunc(
 		schema,

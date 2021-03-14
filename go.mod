@@ -3,6 +3,7 @@ module leggett.dev/devmarks/api
 go 1.14
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/friendsofgo/graphiql v0.2.2
 	github.com/golang-migrate/migrate/v4 v4.12.1
 	github.com/google/uuid v1.1.1

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -69,7 +68,7 @@ func (a *API) GetUser(ctx *app.Context, w http.ResponseWriter, r *http.Request) 
 	return err
 }
 
-func (a *API) validateLogin(ctx context.Context, r *http.Request, userName, password string) (auth.Info, error) {
+func (a *API) validateLogin(r *http.Request, userName, password string) (auth.Info, error) {
 	user, err := a.App.GetUserByEmail(userName)
 
 	if user == nil || err != nil {
@@ -98,7 +97,7 @@ func (a *API) createToken(ctx *app.Context, w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	user, err := a.validateLogin(r.Context(), r, input.Email, input.Password)
+	user, err := a.validateLogin(r, input.Email, input.Password)
 	if err != nil {
 		return err
 	}
