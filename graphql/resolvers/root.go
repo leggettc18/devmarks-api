@@ -35,3 +35,32 @@ func(r RootResolver) Bookmarks(ctx context.Context) (*[]*BookmarkResolver, error
 	}
 	return &resolvers, nil
 }
+
+type NewBookmarkArgs struct {
+	Name string
+	Url string
+	Color *string
+}
+
+func (r RootResolver) NewBookmark(ctx context.Context, args NewBookmarkArgs) (*BookmarkResolver, error) {
+	var user, ok = ctx.Value("user").(*model.User)
+
+	if !ok {
+		return nil, errors.New("bookmarks: no authenticated user in context")
+	}
+
+	newBookmark := model.Bookmark {
+		Name: args.Name,
+		URL: args.Url,
+		Color: *args.Color,
+		OwnerID: user.ID,
+	}
+
+	if err := r.Database.CreateBookmark(&newBookmark); err != nil {
+		return nil, err
+	}
+
+	bookmarkResolver := &BookmarkResolver{newBookmark}
+
+	return bookmarkResolver, nil
+}
