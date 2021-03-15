@@ -26,9 +26,6 @@ import (
 	"leggett.dev/devmarks/api/model"
 )
 
-var authenticator auth.Authenticator
-var cache store.Cache
-
 var (
 	opts = []graphql.SchemaOpt{graphql.UseStringDescriptions()}
 )
@@ -63,12 +60,12 @@ func New(a *app.App) (api *API, err error) {
 }
 
 func (a *API) setupGoGuardian() {
-	authenticator = auth.New()
-	cache = store.NewFIFO(context.Background(), time.Minute*10)
+	a.App.Authenticator = auth.New()
+	a.App.AuthCache = store.NewFIFO(context.Background(), time.Minute*10)
 
-	tokenStrategy := token.New(token.NoOpAuthenticate, cache)
+	tokenStrategy := token.New(token.NoOpAuthenticate, a.App.AuthCache)
 
-	authenticator.EnableStrategy(token.CachedStrategyKey, tokenStrategy)
+	a.App.Authenticator.EnableStrategy(token.CachedStrategyKey, tokenStrategy)
 }
 
 // Init Initializes our API (routes, authentication setup, etc.)
@@ -118,20 +115,8 @@ func (a *API) InitGraphql(r *mux.Router) {
 		},
 	)
 	r.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
-		tokenStrategy := authenticator.Strategy(token.CachedStrategyKey)
-		userInfo, _ := tokenStrategy.Authenticate(r.Context(), r)
-		// if err != nil {
-		// 	http.Error(w, "invalid credentials", http.StatusForbidden)
-		// }
-		var user *model.User
-		var ctx context.Context
-		if userInfo != nil {
-			user, _ = a.App.GetUserByEmail(userInfo.UserName())
-			ctx = context.WithValue(context.Background(), "user", user)
-		} else {
-			ctx = context.Background()
-		}
-
+		token := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
+		ctx := context.WithValue(context.Background(), "token", token)
 		wsHandler.ServeHTTP(w, r.WithContext(ctx))
 	})
 	// graphiql
@@ -175,7 +160,7 @@ func (a *API) handler(f func(*app.Context, http.ResponseWriter, *http.Request) e
 			ctx = ctx.WithUser(user)
 		} */
 		if !(r.URL.Path == "/api/users/" || r.URL.Path == "/api/auth/token/") {
-			tokenStrategy := authenticator.Strategy(token.CachedStrategyKey)
+			tokenStrategy := a.App.Authenticator.Strategy(token.CachedStrategyKey)
 			userInfo, err := tokenStrategy.Authenticate(r.Context(), r)
 			if err != nil {
 				ctx.Logger.WithError(err).Error("unable to get user")

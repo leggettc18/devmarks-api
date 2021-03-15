@@ -2,10 +2,10 @@ package resolvers
 
 import (
 	"context"
-	"errors"
 
 	"golang.org/x/crypto/bcrypt"
 	"leggett.dev/devmarks/api/app"
+	"leggett.dev/devmarks/api/auth"
 	"leggett.dev/devmarks/api/model"
 )
 
@@ -19,11 +19,11 @@ func NewRoot(app *app.App) (*RootResolver, error) {
 }
 
 func(r RootResolver) Bookmarks(ctx context.Context) (*[]*BookmarkResolver, error){
-	var user, ok = ctx.Value("user").(*model.User)
-
-	if !ok {
-		return nil, errors.New("bookmarks: no authenticated user in context")
+	user, err := auth.AuthenticateToken(ctx, *r.App)
+	if err != nil {
+		return nil, err
 	}
+	
 	bookmarks, err := r.App.Database.GetBookmarksByUserID(user.ID)
 
 	if err != nil {
@@ -44,10 +44,9 @@ type NewBookmarkArgs struct {
 }
 
 func (r RootResolver) NewBookmark(ctx context.Context, args NewBookmarkArgs) (*BookmarkResolver, error) {
-	var user, ok = ctx.Value("user").(*model.User)
-
-	if !ok {
-		return nil, errors.New("bookmarks: no authenticated user in context")
+	user, err := auth.AuthenticateToken(ctx, *r.App)
+	if err != nil {
+		return nil, err
 	}
 
 	newBookmark := model.Bookmark {
@@ -107,7 +106,7 @@ type LoginArgs struct {
 	Password string
 }
 
-func (r *RootResolver) Login(args LoginArgs) (*AuthResolver, error) {
+func (r *RootResolver) Login(ctx context.Context, args LoginArgs) (*AuthResolver, error) {
 	user, errUser := r.App.Database.GetUserByEmail(args.Email)
 	if errUser != nil {
 		return nil, errUser

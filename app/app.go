@@ -1,6 +1,8 @@
 package app
 
 import (
+	"github.com/shaj13/go-guardian/auth"
+	"github.com/shaj13/go-guardian/store"
 	"github.com/sirupsen/logrus"
 	"leggett.dev/devmarks/api/db"
 )
@@ -9,6 +11,8 @@ import (
 type App struct {
 	Config   *Config
 	Database *db.Database
+	AuthCache store.Cache
+	Authenticator auth.Authenticator
 }
 
 // NewContext returns a new Context object

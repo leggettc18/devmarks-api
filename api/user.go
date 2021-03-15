@@ -103,7 +103,7 @@ func (a *API) createToken(ctx *app.Context, w http.ResponseWriter, r *http.Reque
 	}
 
 	bearerToken := uuid.New().String()
-	cache.Store(bearerToken, user, r)
+	a.App.AuthCache.Store(bearerToken, user, r)
 	responseBody := fmt.Sprintf("{ \"token\": \"%s\" }\n", bearerToken)
 	_, err = w.Write([]byte(responseBody))
 	return err
