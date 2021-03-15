@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"golang.org/x/crypto/bcrypt"
 	"leggett.dev/devmarks/api/app"
 	"leggett.dev/devmarks/api/model"
 )
@@ -63,6 +64,42 @@ func (r RootResolver) NewBookmark(ctx context.Context, args NewBookmarkArgs) (*B
 	bookmarkResolver := &BookmarkResolver{newBookmark}
 
 	return bookmarkResolver, nil
+}
+
+type RegisterArgs struct {
+	Email string
+	Password string
+}
+
+func (r *RootResolver) Register(args RegisterArgs) (*AuthResolver, error) {
+	passwordHash, errHash := bcrypt.GenerateFromPassword(
+		[]byte(args.Password),
+		bcrypt.DefaultCost,
+	)
+	if errHash != nil {
+		return nil, errHash
+	}
+
+	newUser := model.User{
+		Email: args.Email,
+		HashedPassword: passwordHash,
+	}
+
+	if err := r.App.Database.CreateUser(&newUser); err != nil {
+		return nil, err
+	}
+
+	token, errToken := GenerateToken(&newUser, r.App.Config.SecretKey)
+	if errToken != nil {
+		return nil, errToken
+	}
+
+	payload := AuthPayload{
+		Token: &token,
+		User: &newUser,
+	}
+
+	return &AuthResolver{payload}, nil
 }
 
 type LoginArgs struct {

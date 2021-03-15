@@ -1,6 +1,8 @@
 package db
 
 import (
+	"strings"
+
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 
@@ -13,7 +15,7 @@ func (db *Database) GetUserByEmail(email string) (*model.User, error) {
 
 	if err := db.First(&user, model.User{Email: email}).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil
+			return nil, errors.Wrap(err, "user does not exist")
 		}
 		return nil, errors.Wrap(err, "unable to get user")
 	}
@@ -22,5 +24,10 @@ func (db *Database) GetUserByEmail(email string) (*model.User, error) {
 
 // CreateUser inserts a new user into the database.
 func (db *Database) CreateUser(user *model.User) error {
-	return db.Create(user).Error
+	if err := db.Create(user).Error; err != nil {
+		if strings.Contains(err.Error(), "duplicate") {
+			return errors.New("duplicate user")
+		}
+	}
+	return nil
 }

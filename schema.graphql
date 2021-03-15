@@ -31,6 +31,7 @@ type Query {
 type Mutation {
     newBookmark(name: String!, url: String!, color: String): Bookmark!
     login(email: String!, password: String!): AuthPayload
+    register(email: String!, password: String!): AuthPayload
 }
 
 scalar Time
