@@ -2,6 +2,7 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 	"leggett.dev/devmarks/api/app"
@@ -101,6 +102,21 @@ func (r *RootResolver) Register(args RegisterArgs) (*AuthResolver, error) {
 	return &AuthResolver{payload}, nil
 }
 
+type LoginError struct {
+	Field string `json:"field"`
+	Message string `json:"message"`
+}
+
+func (e LoginError) Error() string {
+	return fmt.Sprintf("error [%s]: %s", e.Field, e.Message)
+}
+
+func (e LoginError) Extensions() map[string]interface{} {
+	return map[string]interface{}{
+		"field": e.Field,
+		"message": e.Message,
+	}
+}
 type LoginArgs struct {
 	Email	 string
 	Password string
@@ -109,9 +125,12 @@ type LoginArgs struct {
 func (r *RootResolver) Login(ctx context.Context, args LoginArgs) (*AuthResolver, error) {
 	user, errUser := r.App.Database.GetUserByEmail(args.Email)
 	if errUser != nil {
-		return nil, errUser
+		return nil, LoginError{Field: "email", Message: errUser.Error()}
 	}
-	model.ComparePasswordHash(user.HashedPassword, []byte(args.Password))
+
+	if correctPassword := model.ComparePasswordHash(user.HashedPassword, []byte(args.Password)); !correctPassword {
+		return nil, LoginError{Field: "password", Message: "Incorrect Password"}
+	}
 
 	token, errToken := GenerateToken(user, r.App.Config.SecretKey)
 	if errToken != nil {
