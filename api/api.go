@@ -282,5 +282,10 @@ func (a *API) IPAddressForRequest(r *http.Request) string {
 			}
 		}
 	}
+	if (strings.Contains(addr, "[")) { //If addr is ipv6
+		sep_strings := strings.Split(strings.TrimSpace(addr), ":") //split string at the colons
+		sep_strings = sep_strings[:len(sep_strings) -1] //remove the last string (the port number)
+		return strings.Join(sep_strings, ":") //Join the remaining elements back together into one string with the colons in between.
+	} //If addr is ipv4
 	return strings.Split(strings.TrimSpace(addr), ":")[0]
 }
