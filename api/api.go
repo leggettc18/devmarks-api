@@ -115,9 +115,42 @@ func (a *API) InitGraphql(r *mux.Router) {
 		},
 	)
 	r.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, 100*1024*1024)
+		beginTime := time.Now()
+		hijacker, _ := w.(http.Hijacker)
+		w = &statusCodeRecorder{
+			ResponseWriter: w,
+			Hijacker: hijacker,
+		}
 		token := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
 		ctx := context.WithValue(context.Background(), "token", token)
+		ctx = context.WithValue(ctx, "remote_address", a.IPAddressForRequest((r)))
+		logger := logrus.New()
+		ctx = context.WithValue(ctx, "logger", logger.WithField("request_id", base64.RawURLEncoding.EncodeToString(model.NewID())))
 		wsHandler.ServeHTTP(w, r.WithContext(ctx))
+		defer func() {
+			statusCode := w.(*statusCodeRecorder).StatusCode
+			if statusCode == 0 {
+				statusCode = 200
+			}
+			duration := time.Since(beginTime)
+
+			logger := logger.WithFields(logrus.Fields{
+				"duration":    duration,
+				"status_code": statusCode,
+				"remote":      ctx.Value("remote_address").(string),
+			})
+			logger.Info(r.Method + " " + r.URL.RequestURI())
+		}()
+
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Error(fmt.Errorf("%v: %s", r, debug.Stack()))
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+			}
+		}()
+
+		w.Header().Set("Content-Type", "application/json")
 	})
 	// graphiql
 	graphiqlHandler, err := graphiql.NewGraphiqlHandler("/graphql")
