@@ -66,6 +66,29 @@ func (r RootResolver) NewBookmark(ctx context.Context, args NewBookmarkArgs) (*B
 	return bookmarkResolver, nil
 }
 
+type DeleteBookmarkArgs struct {
+	ID int32
+}
+
+func (r RootResolver) DeleteBookmark(ctx context.Context, args DeleteBookmarkArgs) (bool, error) {
+	user, err := auth.AuthenticateToken(ctx, *r.App)
+	if err != nil {
+		return false, err
+	}
+	bookmark, err := r.App.Database.GetBookmarkByID(uint(args.ID))
+	if err != nil {
+		return false, err
+	}
+	if user.ID == bookmark.OwnerID {
+		err = r.App.Database.DeleteBookmarkByID(uint(args.ID))
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, DeleteError{Field: "delete", Message: "Permission denied."}
+}
+
 type RegisterArgs struct {
 	Email string
 	Password string
@@ -100,6 +123,22 @@ func (r *RootResolver) Register(args RegisterArgs) (*AuthResolver, error) {
 	}
 
 	return &AuthResolver{payload}, nil
+}
+
+type DeleteError struct {
+	Field string `json:"field"`
+	Message string `json:"message"`
+}
+
+func (e DeleteError) Error() string {
+	return fmt.Sprintf("error [%s]: %s", e.Field, e.Message)
+}
+
+func (e DeleteError) Extensions() map[string]interface{} {
+	return map[string]interface{}{
+		"field": e.Field,
+		"message": e.Message,
+	}
 }
 
 type LoginError struct {
