@@ -30,6 +30,7 @@ type Query {
 
 type Mutation {
     newBookmark(name: String!, url: String!, color: String): Bookmark!
+    deleteBookmark(id: ID!): Boolean!
     login(email: String!, password: String!): AuthPayload
     register(email: String!, password: String!): AuthPayload
 }
