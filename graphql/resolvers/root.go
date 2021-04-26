@@ -3,6 +3,7 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"golang.org/x/crypto/bcrypt"
 	"leggett.dev/devmarks/api/app"
@@ -67,7 +68,7 @@ func (r RootResolver) NewBookmark(ctx context.Context, args NewBookmarkArgs) (*B
 }
 
 type DeleteBookmarkArgs struct {
-	ID int32
+	ID string
 }
 
 func (r RootResolver) DeleteBookmark(ctx context.Context, args DeleteBookmarkArgs) (bool, error) {
@@ -75,12 +76,16 @@ func (r RootResolver) DeleteBookmark(ctx context.Context, args DeleteBookmarkArg
 	if err != nil {
 		return false, err
 	}
-	bookmark, err := r.App.Database.GetBookmarkByID(uint(args.ID))
+	id, err := strconv.ParseUint(args.ID, 10, 32)
+	if err != nil {
+		return false, err
+	}
+	bookmark, err := r.App.Database.GetBookmarkByID(uint(id))
 	if err != nil {
 		return false, err
 	}
 	if user.ID == bookmark.OwnerID {
-		err = r.App.Database.DeleteBookmarkByID(uint(args.ID))
+		err = r.App.Database.DeleteBookmarkByID(uint(id))
 		if err != nil {
 			return false, err
 		}
