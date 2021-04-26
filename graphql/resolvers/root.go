@@ -53,7 +53,7 @@ func (r RootResolver) NewBookmark(ctx context.Context, args NewBookmarkArgs) (*B
 	newBookmark := model.Bookmark {
 		Name: args.Name,
 		URL: args.Url,
-		Color: *args.Color,
+		Color: args.Color,
 		OwnerID: user.ID,
 	}
 

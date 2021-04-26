@@ -7,7 +7,7 @@ type Bookmark struct {
 
 	Name  string `json:"name"`
 	URL   string `json:"url"`
-	Color string `json:"color"`
+	Color *string `json:"color"`
 
 	OwnerID uint     `json:"owner_id"`
 	Folders []Folder `gorm:"many2many:bookmark_folder;" json:"folders"`

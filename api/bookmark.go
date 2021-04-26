@@ -55,7 +55,7 @@ func (a *API) CreateBookmark(ctx *app.Context, w http.ResponseWriter, r *http.Re
 		return err
 	}
 
-	bookmark := &model.Bookmark{Name: input.Name, URL: input.URL, Color: input.Color}
+	bookmark := &model.Bookmark{Name: input.Name, URL: input.URL, Color: &input.Color}
 
 	if err := ctx.CreateBookmark(bookmark); err != nil {
 		return err
@@ -124,7 +124,7 @@ func (a *API) UpdateBookmarkByID(ctx *app.Context, w http.ResponseWriter, r *htt
 		existingBookmark.URL = *input.URL
 	}
 	if input.Color != nil {
-		existingBookmark.Color = *input.Color
+		existingBookmark.Color = input.Color
 	}
 
 	err = ctx.UpdateBookmark(existingBookmark)

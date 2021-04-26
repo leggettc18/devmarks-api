@@ -32,5 +32,5 @@ func (r *BookmarkResolver) URL() string {
 }
 
 func (r *BookmarkResolver) Color() *string {
-	return &r.Bookmark.Color
+	return r.Bookmark.Color
 }
