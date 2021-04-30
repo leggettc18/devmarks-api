@@ -3,11 +3,12 @@ package resolvers
 import (
 	"context"
 	"fmt"
-	"strconv"
 
+	"github.com/graph-gophers/graphql-go"
 	"golang.org/x/crypto/bcrypt"
 	"leggett.dev/devmarks/api/app"
 	"leggett.dev/devmarks/api/auth"
+	"leggett.dev/devmarks/api/graphql/helpers"
 	"leggett.dev/devmarks/api/model"
 )
 
@@ -34,7 +35,7 @@ func(r RootResolver) Bookmarks(ctx context.Context) (*[]*BookmarkResolver, error
 
 	var resolvers []*BookmarkResolver
 	for _, bookmark := range bookmarks {
-		resolvers = append(resolvers, &BookmarkResolver{*bookmark})
+		resolvers = append(resolvers, &BookmarkResolver{*bookmark, *r.App.Database})
 	}
 	return &resolvers, nil
 }
@@ -62,13 +63,13 @@ func (r RootResolver) NewBookmark(ctx context.Context, args NewBookmarkArgs) (*B
 		return nil, err
 	}
 
-	bookmarkResolver := &BookmarkResolver{newBookmark}
+	bookmarkResolver := &BookmarkResolver{newBookmark, *r.App.Database}
 
 	return bookmarkResolver, nil
 }
 
 type DeleteBookmarkArgs struct {
-	ID string
+	ID graphql.ID
 }
 
 func (r RootResolver) DeleteBookmark(ctx context.Context, args DeleteBookmarkArgs) (bool, error) {
@@ -76,16 +77,16 @@ func (r RootResolver) DeleteBookmark(ctx context.Context, args DeleteBookmarkArg
 	if err != nil {
 		return false, err
 	}
-	id, err := strconv.ParseUint(args.ID, 10, 32)
+	id, err := helpers.GqlIDToUint(args.ID)
 	if err != nil {
 		return false, err
 	}
-	bookmark, err := r.App.Database.GetBookmarkByID(uint(id))
+	bookmark, err := r.App.Database.GetBookmarkByID(id)
 	if err != nil {
 		return false, err
 	}
 	if user.ID == bookmark.OwnerID {
-		err = r.App.Database.DeleteBookmarkByID(uint(id))
+		err = r.App.Database.DeleteBookmarkByID(id)
 		if err != nil {
 			return false, err
 		}

@@ -10,6 +10,7 @@ type Bookmark {
     name: String!
     url: String!
     color: String
+    owner: User!
 }
 
 type User {
