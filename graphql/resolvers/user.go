@@ -1,9 +1,8 @@
 package resolvers
 
 import (
-	"fmt"
-
 	"github.com/graph-gophers/graphql-go"
+	"leggett.dev/devmarks/api/graphql/helpers"
 	"leggett.dev/devmarks/api/model"
 )
 
@@ -12,7 +11,7 @@ type UserResolver struct {
 }
 
 func (r *UserResolver) ID() graphql.ID {
-	return graphql.ID(fmt.Sprint(r.User.ID))
+	return *helpers.GqlIDP(r.User.ID)
 }
 
 func (r *UserResolver) CreatedAt() graphql.Time {
