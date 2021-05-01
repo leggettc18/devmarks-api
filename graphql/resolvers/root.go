@@ -68,6 +68,42 @@ func (r RootResolver) NewBookmark(ctx context.Context, args NewBookmarkArgs) (*B
 	return bookmarkResolver, nil
 }
 
+type UpdateBookmarkArgs struct {
+	ID graphql.ID
+	Name *string
+	URL *string
+	Color *string
+}
+
+func (r RootResolver) UpdateBookmark(ctx context.Context, args UpdateBookmarkArgs) (*BookmarkResolver, error) {
+	user, err := auth.AuthenticateToken(ctx, *r.App)
+	if err != nil {
+		return nil, err
+	}
+	id, err := helpers.GqlIDToUint(args.ID)
+	if err != nil {
+		return nil, err
+	}
+	bookmark, err := r.App.Database.GetBookmarkByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if user.ID == bookmark.OwnerID {
+		if args.Name != nil {
+			bookmark.Name = *args.Name
+		}
+		if args.URL != nil {
+			bookmark.URL = *args.URL
+		}
+		bookmark.Color = args.Color
+	}
+	err = r.App.Database.UpdateBookmark(bookmark)
+	if err != nil {
+		return nil, err
+	}
+	return &BookmarkResolver{ *bookmark, *r.App.Database }, nil
+}
+
 type DeleteBookmarkArgs struct {
 	ID graphql.ID
 }

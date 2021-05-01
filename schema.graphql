@@ -35,6 +35,7 @@ type Mutation {
     deleteBookmark(id: ID!): Boolean!
     login(email: String!, password: String!): AuthPayload
     register(email: String!, password: String!): AuthPayload
+    updateBookmark(id: ID!, name: String, url: String, color: String): Bookmark!
 }
 
 scalar Time
