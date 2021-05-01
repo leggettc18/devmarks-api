@@ -1,6 +1,6 @@
 # Devmarks API
 
-![Devmarks Logo](https://github.com/leggettc18/devmarks-frontend-web/blob/main/public/img/icons/apple-touch-icon.png?raw=true)
+![Devmarks Logo](https://raw.githubusercontent.com/leggettc18/devmarks-frontend-web/main/src/assets/logo.svg)
 
 This is the README for the backend API of Devmarks.
 
