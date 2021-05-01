@@ -187,3 +187,11 @@ func (r *RootResolver) Login(ctx context.Context, args LoginArgs) (*AuthResolver
 	}
 	return &AuthResolver{payload}, nil
 }
+
+func (r *RootResolver) Me(ctx context.Context) (*UserResolver, error){
+	user, err := auth.AuthenticateToken(ctx, *r.App)
+	if err != nil {
+		return nil, err
+	}
+	return &UserResolver{ *user }, nil
+}

@@ -27,6 +27,7 @@ type AuthPayload {
 
 type Query {
     bookmarks: [Bookmark!]
+    me: User
 }
 
 type Mutation {
