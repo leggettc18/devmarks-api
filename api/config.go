@@ -10,6 +10,14 @@ type Config struct {
 	// The number of proxies positioned in front of the API.
 	// This is used to interpret X-Forwarded-For headers.
 	ProxyCount int
+
+	// Whether or not to use CORS, for instance if there is
+	// a reverse proxy handling CORS instead.
+	Cors bool
+
+	// If CORS is in use, this specifies the Origins that are
+	// allowed
+	AllowedHosts []string
 }
 
 // InitConfig initializes our API's Config object using viper and setting defaults
@@ -18,9 +26,14 @@ func InitConfig() (*Config, error) {
 	config := &Config{
 		Port:       viper.GetInt("Port"),
 		ProxyCount: viper.GetInt("ProxyCount"),
+		Cors: 		viper.GetBool("Cors"),
+		AllowedHosts: viper.GetStringSlice("AllowedHosts"),
 	}
 	if config.Port == 0 {
 		config.Port = 9092
+	}
+	if len(config.AllowedHosts) == 0 {
+		config.AllowedHosts = append(config.AllowedHosts, "*")
 	}
 	return config, nil
 }

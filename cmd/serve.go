@@ -21,19 +21,28 @@ import (
 type query struct{}
 
 func serveAPI(ctx context.Context, api *api.API) {
-	cors := handlers.CORS(
-		handlers.AllowedOrigins([]string{"*"}),
-		handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "OPTIONS"}),
-		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
-	)
-
 	router := mux.NewRouter()
 	api.Init(router.PathPrefix("/api").Subrouter())
 	api.InitGraphql(router)
 
-	server := &http.Server{
+	var server *http.Server
+	var handler http.Handler
+
+	if api.Config.Cors {
+		cors := handlers.CORS(
+		handlers.AllowedOrigins(api.Config.AllowedHosts),
+		handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "OPTIONS"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+	)
+
+	handler = cors(router)
+	
+} else {
+	handler = router
+}
+server = &http.Server{
 		Addr:        fmt.Sprintf(":%d", api.Config.Port),
-		Handler:     cors(router),
+		Handler:     handler,
 		ReadTimeout: 2 * time.Minute,
 	}
 
